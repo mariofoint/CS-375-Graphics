@@ -62,9 +62,9 @@ class ExperimentalCube {
 
             0.5, 0.0, 0.5, 1.0
         ]);
-        const indices1 = new Uint8Array([     
-            0,1,2,3,6,7,4,5,7,3,
-            5,1,4,0,6,2
+        const indices1 = new Uint8Array([   
+            6,7,4,5,1,7,3,6,2,4,0,1,2,3 
+           //0,1,2,3,6,7,4,5,7,3,5,1,4,0,6,2
             //0,1,2,3,6,7,4,5
         ]);
         /*const indices2 = new Uint8Array([                     
