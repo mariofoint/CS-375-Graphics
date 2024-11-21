@@ -8,17 +8,17 @@ It will have:
 - Vertical moving obstacles with alternating directions.
 - Collision detection using bounding boxes is the plan.
 - A top-down perspective for clear gameplay.
-- will add lighting to obstacles and player to stand out and also the goal of where to go
-- textures if I have time and find ones I like
-- 
+- Lighting to obstacles and player to stand out and also the goal of where to go maybe.
+- Textures if I have time and find ones I like.
+  
 ---
 
 ## **Project Schedule**
 
-- **Week 1**: Try to find a theme and models.  
-- **Week 2**: Add player movement, Add obstacles spawning an, movement.  
-- **Week 3**: Add collision detection, Add speeding up and scoring, and add textures/lighting.  
-- **Week 4**: polish and prepare the final presentation, and make better textures if have time.
+- **Week 1**: Find a theme and models, load models, and create the beginning of a 3js checkerboard base.  
+- **Week 2**: Implement player movement, add obstacles spawning and movement.  
+- **Week 3**: Add collision detection, speeding up, scoring, lighting.  
+- **Week 4**: Polish the game, prepare the final presentation, and add textures if time permits.
 
 ---
 
