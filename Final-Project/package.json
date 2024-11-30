@@ -1,0 +1,19 @@
+{
+  "name": "final-project",
+  "version": "1.0.0",
+  "description": "I want to create a Frogger inspired game where the player moves back and forth (left to right then back left) across the screen avoiding obstacles. If I can get scoring to work it will score points by successfully crossing the screen with difficulty increasing as obstacles move faster after each crossing. Collisions reset the game to the starting state with the score and speed reset. \r It will have:\r - Grid-based movement is the plan but might shift to continuous movement for the player if i cant get it to work well.\r - Vertical moving obstacles with alternating directions.\r - Collision detection using bounding boxes is the plan.\r - A top-down perspective for clear gameplay.\r - Lighting to obstacles and player to stand out and also the goal of where to go maybe.\r - Textures if I have time and find ones I like.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/three": "^0.170.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.1"
+  }
+}
