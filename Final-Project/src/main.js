@@ -1,55 +1,77 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-// Set up scene, camera, renderer
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Add a simple light
-const light = new THREE.AmbientLight(0xffffff, 1);
-scene.add(light);
 
-// Load model
+renderer.setClearColor(0x00bfff); 
+
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+scene.add(ambientLight);
+
+
 const loader = new GLTFLoader();
-const modelPath = '/models/african_penguin_spheniscus_demersus_low_poly.glb'; // Ensure the correct path
+const objects = {};
 
-let model; // Declare model globally so it can be accessed in the animation loop
-loader.load(
-  modelPath,
-  (gltf) => {
-    model = gltf.scene;
-    
-    // Scale up the model
-    model.scale.set(10, 10, 10);
+function createCheckerboard(size, tileSize) {
+    for (let x = 0; x < size; x++) {
+        for (let z = 0; z < size; z++) {
+            const color = (x + z) % 2 === 0 ? 0xffffff : 0x000000; 
+            const tile = new THREE.Mesh(new THREE.PlaneGeometry(tileSize, tileSize), new THREE.MeshBasicMaterial({ color }));
+            tile.rotation.x = -Math.PI / 2;
+            tile.position.set((x - size / 2) * tileSize + tileSize / 2, 0, (z - size / 2) * tileSize + tileSize / 2);
+            scene.add(tile); 
+        }
+    }
+}
 
-    scene.add(model);
+const boardSize = 9;
+const tileSize = 2;
+createCheckerboard(boardSize, tileSize);
 
-    // Set the model position (optional)
-    model.position.set(0, 0, 0); 
+function loadModel(name, path, scale, position) {
+    loader.load(path, (gltf) => {
+        const model = gltf.scene;
+        model.scale.set(scale, scale, scale);
+        model.position.set(position.x, position.y, position.z);
+        scene.add(model);
+        objects[name] = model; 
+    });
+}
 
-    // Move the camera back a bit so we can see the model
-    camera.position.z = 5;
-  },
-  undefined, // On progress (optional)
-  (error) => {
-    console.error('Error loading model:', error);
-  }
-);
+loadModel('frog', '/models/frog.glb', 3, { x: 0, y: 0, z: -8 });
 
-// Animation loop
+camera.position.set(0, 20, 0);
+camera.rotation.x = -Math.PI / 2; 
+
+const frogSpeed = tileSize;
+window.addEventListener('keydown', (event) => {
+    const frog = objects.frog;
+    if (!frog) return;
+
+    switch (event.key.toLowerCase()) {
+        case 'w':
+            frog.position.z -= frogSpeed;
+            break;
+        case 'a': 
+            frog.position.x -= frogSpeed;
+            break;
+        case 's': 
+            frog.position.z += frogSpeed;
+            break;
+        case 'd': 
+            frog.position.x += frogSpeed;
+            break;
+    }
+});
+
 function animate() {
-  requestAnimationFrame(animate);
-
-  // Rotate the model if it has loaded
-  if (model) {
-    model.rotation.y += 0.01; // Adjust the speed (0.01 is a good start)
-    model.rotation.x += 0.01; // Adjust the speed (0.01 is a good start)
-
-  }
-
-  renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
 }
 animate();
