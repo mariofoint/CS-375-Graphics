@@ -8,15 +8,24 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 
-//renderer.setClearColor(0x00bfff); 
+renderer.setClearColor(0x00bfff); 
 
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+directionalLight.position.set(10, 20, 10);
+scene.add(directionalLight);
+
+
 
 const loader = new GLTFLoader();
 const objects = {};
+
+
+let goingForward = true; 
+let appleSpawned = false;
 
 function createCheckerboard(size, tileSize) {
     for (let x = 0; x < size; x++) {
@@ -30,7 +39,7 @@ function createCheckerboard(size, tileSize) {
     }
 }
 
-const boardSize = 9;
+const boardSize = 15;
 const tileSize = 2;
 createCheckerboard(boardSize, tileSize);
 
@@ -46,38 +55,92 @@ function loadModel(name, path, scale, position) {
     });
 }
 
-loadModel('frog', '/models/frog.glb', 3, { x: 0, y: 0, z: -8 });
-loadModel('floor', '/models/wooden_spikes.glb', 100, { x: 0, y: 0, z: -30 });
+function spawnApple() {
+    if (!appleSpawned) {
+        const zPosition = goingForward ? boardSize * tileSize / 2 - 1.5 : -boardSize * tileSize / 2 + 1.5;
+        loadModel('apple', '/models/apple.glb', .5, { x: 0, y: .5, z: zPosition });
+        appleSpawned = true;
+    }
+}
+
+
+
+
+loadModel('frog', '/models/frog.glb', 3, { x: 0, y: 0, z: -boardSize * tileSize / 2 + tileSize / 2 });
+
+
 
 camera.position.set(0, 20, 0);
 camera.lookAt(0, 0, 0);
-//camera.rotation.x = -Math.PI / 2; 
 
 const frogSpeed = tileSize;
+
+let keyStates = {
+    w: false,
+    a: false,
+    s: false,
+    d: false
+};
+
 window.addEventListener('keydown', (event) => {
     const frog = objects.frog;
     if (!frog) return;
+    const key = event.key.toLowerCase();
+    if (keyStates[key]) return;
+    keyStates[key] = true;
 
-    switch (event.key.toLowerCase()) {
+    const initialPosition = frog.position.clone();
+    const minPosition = -boardSize * tileSize / 2 + tileSize / 2;
+    const maxPosition = boardSize * tileSize / 2 - tileSize / 2;
+    
+    frog.position.x = Math.round(frog.position.x / tileSize) * tileSize;
+    frog.position.z = Math.round(frog.position.z / tileSize) * tileSize;
+    
+    switch (key) {
         case 's':
-            frog.position.z -= frogSpeed;
-            frog.rotation.y = Math.PI;
+            frog.position.z -= goingForward ? frogSpeed : -frogSpeed;
+            frog.rotation.y = goingForward ? Math.PI : 0;
             break;
         case 'd': 
-            frog.position.x -= frogSpeed;
-            frog.rotation.y = -Math.PI / 2;
+            frog.position.x -= goingForward ? frogSpeed : -frogSpeed; 
+            frog.rotation.y = goingForward ? -Math.PI / 2 : Math.PI / 2
             break;
         case 'w': 
-            frog.position.z += frogSpeed;
-            frog.rotation.y = 0;
+            frog.position.z += goingForward ? frogSpeed : -frogSpeed; 
+            frog.rotation.y =  goingForward ? 0 : Math.PI;
             break;
         case 'a': 
-            frog.position.x += frogSpeed;
-            frog.rotation.y = Math.PI / 2;
+            frog.position.x += goingForward ? frogSpeed : -frogSpeed; 
+            frog.rotation.y =  goingForward ? Math.PI / 2 : -Math.PI / 2;
             break;
+    }
+    frog.position.x = Math.round(frog.position.x / tileSize) * tileSize;
+    frog.position.z = Math.round(frog.position.z / tileSize) * tileSize;
+
+
+    if (frog.position.x < minPosition || frog.position.x > maxPosition || frog.position.z < minPosition || frog.position.z > maxPosition) {
+        frog.position.copy(initialPosition); 
+    }
+
+    const apple = objects.apple;
+    if (apple) {
+        const frogBox = new THREE.Box3().setFromObject(frog);   
+        const appleBox = new THREE.Box3().setFromObject(apple); 
+    
+   
+        if (frogBox.intersectsBox(appleBox)) {
+            scene.remove(apple);
+            appleSpawned = false;
+            goingForward = !goingForward;  
+            spawnApple();  
+        }
     }
 });
 
+window.addEventListener('keyup', (event) => {
+    const key = event.key.toLowerCase();
+    keyStates[key] = false; 
+});
 const cameraTargetPosition = new THREE.Vector3();
 const cameraLerpSpeed = 0.11; 
 
@@ -86,13 +149,17 @@ function updateCamera() {
     if (frog) {
         const offsetX = 0; 
         const offsetY = 5; 
-        const offsetZ = -10; 
+        const offsetZ = goingForward ? -10 : 10; 
 
-        cameraTargetPosition.set(frog.position.x + offsetX, frog.position.y + offsetY, frog.position.z + offsetZ);
+        cameraTargetPosition.set(
+            frog.position.x + offsetX,
+            frog.position.y + offsetY,
+            frog.position.z + offsetZ
+        );
 
         camera.position.lerp(cameraTargetPosition, cameraLerpSpeed);
-
         camera.lookAt(frog.position.x, frog.position.y, frog.position.z);
+
     }
 }
 
@@ -104,4 +171,5 @@ function animate() {
     updateCamera();
     renderer.render(scene, camera);
 }
+spawnApple();
 animate();
