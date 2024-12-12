@@ -1,14 +1,63 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+const textureLoader = new THREE.TextureLoader();
+const roadTexture = textureLoader.load('textures/asphalt-texture-close-up.jpg');
+const grass1Texture = textureLoader.load('textures/green-fake-grass-background.jpg');
+const grass2Texture = textureLoader.load('textures/grass-texture-background.jpg');
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.2, 1500);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 
-renderer.setClearColor(0x00bfff); 
+let score = 0;
+
+function updateScoreboard() {
+    const scoreboard = document.getElementById('scoreboard');
+    if (scoreboard) {
+        scoreboard.textContent = `Score: ${score}`;
+    }
+}
+
+function createTreeWall(size, tileSize, gap = 1, density = 0.5) {
+    const distanceFromBoard = (size / 2 + gap) * tileSize;  
+    for (let x = -size / 2 - gap; x <= size / 2 + gap; x++) {
+        if (Math.random() < density) { 
+            placeTreeAtPosition(x * tileSize, distanceFromBoard);  
+        }
+        if (Math.random() < density) { 
+            placeTreeAtPosition(x * tileSize, -distanceFromBoard); 
+        }
+    }
+    for (let z = -size / 2 - gap; z <= size / 2 + gap; z++) {
+        if (Math.random() < density) { 
+            placeTreeAtPosition(distanceFromBoard, z * tileSize);  
+        }
+        if (Math.random() < density) { 
+            placeTreeAtPosition(-distanceFromBoard, z * tileSize); 
+        }
+    }
+}
+
+function placeTreeAtPosition(x, z) {
+    const treePosition = { x: x, y: 0, z: z };
+    loadTree(treePosition);  
+}
+
+function loadTree(position) {
+    loadModel('tree', '/models/low_poly_pine_tree.glb', 1.5, position, (tree) => {
+        tree.scale.set(1.5, 1.5, 1.5);  
+    });
+}
+
+
+
+
+
+
+renderer.setClearColor(0x000000); 
 
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
@@ -22,31 +71,6 @@ scene.add(directionalLight);
 
 const loader = new GLTFLoader();
 const objects = {};
-
-let speedMultiplier = 0.5;
-
-let goingForward = true; 
-let appleSpawned = false;
-let topView = false;
-
-function createCheckerboard(size, tileSize) {
-    for (let x = 0; x < size; x++) {
-        for (let z = 0; z < size; z++) {
-            const color = (x + z) % 2 === 0 ? 0xffffff : 0x000000; 
-            const tile = new THREE.Mesh(new THREE.PlaneGeometry(tileSize, tileSize), new THREE.MeshBasicMaterial({ color }));
-            tile.rotation.x = -Math.PI / 2;
-            tile.position.set((x - size / 2) * tileSize + tileSize / 2, 0, (z - size / 2) * tileSize + tileSize / 2);
-            scene.add(tile); 
-        }
-    }
-}
-
-const boardSize = 15;
-const tileSize = 2;
-createCheckerboard(boardSize, tileSize);
-
-
-
 function loadModel(name, path, scale, position, callback) {
     loader.load(path, (gltf) => {
         const model = gltf.scene;
@@ -57,6 +81,70 @@ function loadModel(name, path, scale, position, callback) {
         if (callback) callback(model);
     });
 }
+
+
+let speedMultiplier = 0.5;
+let maxCarAmount = 1;
+let spawnRate = 7000;
+
+let goingForward = true; 
+let appleSpawned = false;
+let topView = false;
+
+function createCheckerboard(size, tileSize) {
+    for (let x = 0; x < size; x++) {
+        for (let z = 0; z < size; z++) {
+            let material;
+            if ((z % 4 === 2 || z % 4 === 0) && (z!= 0 && z != 14)) {
+                material = new THREE.MeshBasicMaterial({ map: roadTexture, side: THREE.DoubleSide });
+            } else {
+                material = (x + z) % 2 === 0 ?  new THREE.MeshBasicMaterial({ map: grass1Texture, side: THREE.DoubleSide })
+                                             :  new THREE.MeshBasicMaterial({ map: grass2Texture, side: THREE.DoubleSide });
+            }
+
+            const tile = new THREE.Mesh(new THREE.PlaneGeometry(tileSize, tileSize), material);
+            tile.rotation.x = -Math.PI / 2;
+            tile.position.set((x - size / 2) * tileSize + tileSize / 2, 0.001, (z - size / 2) * tileSize + tileSize / 2);
+            scene.add(tile);
+        }
+    }
+    createTreeWall(size, tileSize, 10); 
+}
+
+const boardSize = 15;
+const tileSize = 2;
+createCheckerboard(boardSize, tileSize);
+
+
+
+
+
+
+
+function createLandscape(size, tileSize) {
+    const textureLoader = new THREE.TextureLoader();
+    const grayTexture = textureLoader.load('textures/gray-painted-background.jpg');
+
+    const landscapeGeometry = new THREE.PlaneGeometry(size * tileSize * 2, size * tileSize * 2, 50, 50); 
+
+    const positionAttribute = landscapeGeometry.attributes.position; 
+    const array = positionAttribute.array;
+
+    landscapeGeometry.computeVertexNormals(); 
+
+    const landscape = new THREE.Mesh(landscapeGeometry, new THREE.MeshBasicMaterial({ map: grayTexture, side: THREE.DoubleSide }));
+    landscape.rotation.x = -Math.PI / 2; 
+    landscape.position.set(0, 0, 0); 
+    scene.add(landscape);
+}
+createLandscape(boardSize, tileSize);
+
+
+
+
+
+
+
 
 
 function spawnApple() {
@@ -138,6 +226,11 @@ window.addEventListener('keydown', (event) => {
             scene.remove(apple);
             appleSpawned = false;
             goingForward = !goingForward;  
+            score++;
+            maxCarAmount++;
+            spawnRate -= 300;
+            updateScoreboard();
+
             speedMultiplier += 0.15;
             Object.values(objects).forEach((object) => {
                 if (object.userData && object.userData.speed) {
@@ -231,7 +324,6 @@ function updateCars() {
 
 
 
-
 const laneCarCounts = {};
 
 function startCarSpawning() {
@@ -241,19 +333,19 @@ function startCarSpawning() {
 
         laneCarCounts[row] = 0; 
         setInterval(() => {
-            if (laneCarCounts[row] < 3) { 
+            if (laneCarCounts[row] < maxCarAmount) { 
                 spawnCar(row, direction);
                 laneCarCounts[row]++; 
 
                 const chance = Math.random();
-                if (chance > 0.7 && laneCarCounts[row] < 3) {
+                if (chance > 0.7 && laneCarCounts[row] < maxCarAmount) {
                     setTimeout(() => {
                         spawnCar(row, direction);
                         laneCarCounts[row]++;
                     }, Math.random() * 2000 + 500);
                 }
             }
-        }, Math.random() * 5000 + 3000); 
+        }, Math.random() * spawnRate + 3000); 
     }
 }
 startCarSpawning();
