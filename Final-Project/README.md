@@ -2,6 +2,9 @@
 
 ## **Project Overview**
 
+
+
+Here is a Link to my slides https://docs.google.com/presentation/d/1fwEMfjLMjuTD5W2JgMNuh1krlBdY1biaMxhCaajd3gg/edit?usp=sharing
 I want to create a Frogger inspired game where the player moves back and forth (left to right then back left) across the screen avoiding obstacles. If I can get scoring to work it will score points by successfully crossing the screen with difficulty increasing as obstacles move faster after each crossing. Collisions reset the game to the starting state with the score and speed reset. 
 It will have:
 - Grid-based movement is the plan but might shift to continuous movement for the player if i cant get it to work well.
