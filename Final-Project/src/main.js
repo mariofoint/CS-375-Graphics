@@ -60,12 +60,15 @@ function loadTree(position) {
 renderer.setClearColor(0x000000); 
 
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+const ambientLight = new THREE.AmbientLight(0x404040, 0.7);  
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-directionalLight.position.set(10, 20, 10);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);  
+directionalLight.position.set(10, 20, 10);  
 scene.add(directionalLight);
+
+let fireLight;
 
 
 
@@ -150,7 +153,19 @@ createLandscape(boardSize, tileSize);
 function spawnApple() {
     if (!appleSpawned) {
         const zPosition = goingForward ? boardSize * tileSize / 2 - 1.5 : -boardSize * tileSize / 2 + 1.5;
-        loadModel('apple', '/models/apple.glb', .5, { x: 0, y: .5, z: zPosition });
+        
+        
+        loadModel('apple', '/models/army_campfire_01.glb', 1.3, { x: 0, y: 0, z: zPosition }, (fire) => {
+          
+            fireLight = new THREE.SpotLight(0xffa500, 10, 200, 2);  
+            fireLight.castShadow = true;
+            fireLight.position.set(0, 1, zPosition);  
+            scene.add(fireLight); 
+
+      
+            fire.material.emissive = new THREE.Color(0xffa500); 
+        });
+        
         appleSpawned = true;
     }
 }
@@ -224,13 +239,13 @@ window.addEventListener('keydown', (event) => {
 
         if (frogBox.intersectsBox(appleBox)) {
             scene.remove(apple);
+            scene.remove(fireLight);
             appleSpawned = false;
             goingForward = !goingForward;  
             score++;
             maxCarAmount++;
             spawnRate -= 300;
             updateScoreboard();
-
             speedMultiplier += 0.15;
             Object.values(objects).forEach((object) => {
                 if (object.userData && object.userData.speed) {
@@ -273,7 +288,7 @@ function spawnCar(row, direction) {
     const carPosition = { x: initialX, y: -.075, z: (row - boardSize / 2) * tileSize + tileSize / 2 };
     const carName = `car_${row}_${direction}_${Date.now()}`;
 
-    loadModel(carName, '/models/car_with_ducks.glb', 1.7, carPosition, (car) => {
+    loadModel(carName, '/models/snow_man.glb', 1.7, carPosition, (car) => {
         car.userData = { speed: 0.1 * direction * speedMultiplier, row }; 
         car.rotation.y = direction > 0 ? 0 : Math.PI;
     });
@@ -294,7 +309,8 @@ function resetGame() {
 
     laneCarCounts = {}; 
     startCarSpawning();
-
+    score = 0;
+    updateScoreboard();
     topView = false; 
 }
 
